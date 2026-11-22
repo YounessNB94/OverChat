@@ -4,18 +4,19 @@ import { Box, Typography } from '@mui/material';
 
 interface ChatWidgetProps {
   url: string;
+  zoom: number;
 }
 
-// Taille de référence pour le widget
 const BASE_WIDTH = 525;
-
-// Limites du zoom
-const MIN_SCALE = 0.35;
+const MIN_SCALE = 0.25;
 const MAX_SCALE = 2;
 
-export default function ChatWidget({ url }: ChatWidgetProps) {
+export default function ChatWidget({
+  url,
+  zoom,
+}: ChatWidgetProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(0.8);
+  const [containerWidth, setContainerWidth] = useState(420);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -25,21 +26,23 @@ export default function ChatWidget({ url }: ChatWidgetProps) {
     const observer = new ResizeObserver((entries) => {
       const width = entries[0]?.contentRect.width;
 
-      if (!width) return;
-
-      // Zoom proportionnel à la largeur disponible
-      const newScale = Math.min(
-        MAX_SCALE,
-        Math.max(MIN_SCALE, width / BASE_WIDTH)
-      );
-
-      setScale(newScale);
+      if (width) {
+        setContainerWidth(width);
+      }
     });
 
     observer.observe(container);
 
     return () => observer.disconnect();
   }, []);
+
+  // Zoom automatique + réglage manuel
+  const automaticScale = containerWidth / BASE_WIDTH;
+
+  const scale = Math.max(
+    MIN_SCALE,
+    Math.min(MAX_SCALE, automaticScale * zoom)
+  );
 
   return (
     <Box
@@ -61,23 +64,21 @@ export default function ChatWidget({ url }: ChatWidgetProps) {
             position: 'absolute',
             top: 0,
             left: 0,
-
-            // Compense le zoom pour remplir la fenêtre
             width: `${100 / scale}%`,
             height: `${100 / scale}%`,
-
             border: 'none',
             background: 'transparent',
-
-            // Redimensionne l'ensemble du widget
+            display: 'block',
             transform: `scale(${scale})`,
             transformOrigin: 'top left',
           }}
         />
       ) : (
-        <Typography sx={{color:"text.secondary", textAlign:"center", p: 2 }}
+        <Typography
+          color="text.secondary"
+          sx={{ p: 2, textAlign: 'center' }}
         >
-          Configure ton URL Streamlabs pour afficher le chat.
+          Configure ton URL Streamlabs.
         </Typography>
       )}
     </Box>
